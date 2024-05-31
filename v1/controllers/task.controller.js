@@ -5,7 +5,15 @@ const taskValidate = require("../validates/task.validate");
 
 // [GET] /api/v1/tasks
 module.exports.index = async (req, res) => {
+    const userId = res.locals.user.id;
     const find = {
+        $or: [{
+                createdBy: userId
+            },
+            {
+                listUser: userId
+            }
+        ],
         deleted: false
     }
     // Lọc theo trạng thái
@@ -40,7 +48,10 @@ module.exports.index = async (req, res) => {
         .limit(pagination.limit)
         .skip(skip)
 
-    res.json(tasks);
+    res.json({
+        code: 200,
+        tasks: tasks
+    });
 }
 
 // [GET] /api/v1/tasks/detail/:id
@@ -122,6 +133,7 @@ module.exports.changeMulti = async (req, res) => {
 // [POST] /api/v1/tasks/create
 module.exports.create = async (req, res) => {
     try {
+        req.body.createBy = res.locals.user.id;
         const result = taskValidate(req.body);
         if (result.error) {
             res.json({
@@ -194,6 +206,7 @@ module.exports.delete = async (req, res) => {
         })
     }
 }
+
 // [POST] /api/v1/tasks/delete-multi
 module.exports.deleteMulti = async (req, res) => {
     try {

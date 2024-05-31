@@ -112,3 +112,68 @@ module.exports.passwordForgot = async (req, res) => {
         message: "Đã gửi mã OTP qua email!"
     })
 }
+
+// [POST] /users/password/otp
+module.exports.passwordOtp = async (req, res) => {
+    const email = req.body.email;
+    const otp = req.body.otp;
+    const result = await ForgotPassword.findOne({
+        email: email,
+        otp: otp
+    })
+    if (!result) {
+        res.json({
+            code: 400,
+            message: "Mã otp không đúng!"
+        })
+        return;
+    }
+    const user = await User.findOne({
+        email: email
+    })
+    const token = user.token;
+    res.json({
+        code: 200,
+        token: token
+    })
+}
+
+// [POST] /users/password/reset
+module.exports.passwordReset = async (req, res) => {
+    const token = req.headers.authorization.split(" ")[1];
+    const password = req.body.password;
+
+    await User.updateOne({
+        token: token,
+        deleted: false
+    }, {
+        password: md5(password)
+    })
+
+    res.json({
+        code: 200,
+        message: "Đổi mật khẩu thành công!"
+    })
+}
+
+// [GET] /users/detail
+module.exports.detail = async (req, res) => {
+
+    res.json({
+        code: 200,
+        user: res.locals.user
+    })
+}
+
+// [GET] /users/list
+module.exports.list = async (req, res) => {
+    const users = await User.find({
+        deleted: false
+    }).select("fullName email avatar");
+
+    res.json({
+        code: 200,
+        message: "Thành công!",
+        users: users
+    })
+}
